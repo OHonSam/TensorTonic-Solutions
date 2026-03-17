@@ -6,26 +6,14 @@ def pad_sequences(seqs, pad_value=0, max_len=None):
       N = len(seqs)
       L = max_len if provided else max(len(seq) for seq in seqs) or 0
     """
+    lengths = np.array([len(seq) for seq in seqs])
     if max_len is None:
-        max_len = max(len(seq) for seq in seqs)
+        max_len = lengths.max()
 
-    new_seqs = []
-    for seq in seqs:
-        seq = np.array(seq)
-        print("seq:", seq)
-        
-        if len(seq) <= max_len:
-            num_pads = max_len - len(seq)
-            required_pads = np.full(shape=num_pads, fill_value=pad_value)
-            print("required_pads:", required_pads)
-            new_seq = np.concatenate([seq, required_pads])
-        else:
-            print("seq:", seq[: max_len])
-            new_seq = seq[: max_len]
+    out = np.full(shape=(len(seqs), max_len), fill_value=pad_value)
+    mask = np.arange(max_len) < lengths.reshape(-1, 1)
+    flatten_seqs = np.concatenate([seq[: max_len] for seq in seqs])
 
-        new_seqs.append(new_seq)
-        
-    return np.array(new_seqs)
-            
-            
-        
+    out[mask] = flatten_seqs
+
+    return out

@@ -25,30 +25,35 @@ class WordPieceTokenizer:
         """
         Tokenize a single word into subwords.
         """
-        # Find prefix
-        subwords = []
-        suffix_start_idx = 0
-        for i in range(len(word), 0, -1):
-            prefix = word[:i]
+        if len(word) > self.max_word_len:
+            return [self.unk_token]
             
-            if prefix in self.vocab:
-                subwords.append(prefix)
-                suffix_start_idx = i
-                break
+        subwords = []
+        start = 0
+        end = len(word)
+        
+        find_prefix = True
+        prefix_unknown = True
+        
+        while start < end:
+            substr = word[start:end]
 
-        while suffix_start_idx < len(word):
-            found_known_suffix = False
-            for i in range(len(word), suffix_start_idx, -1):
-                suffix = "##" + word[suffix_start_idx: i]
-    
-                if suffix in self.vocab:
-                    subwords.append(suffix)
-                    suffix_start_idx = i
-                    found_known_suffix = True
-                    break
-                    
-            if not found_known_suffix:
-                subwords.append(self.unk_token)
-                break
+            if start != 0:
+                substr = "##" + substr
                 
+            if substr in self.vocab:
+                if find_prefix:
+                    prefix_unknown = False
+                    find_prefix = False
+                
+                subwords.append(substr)
+                start = end
+                end = len(word)
+                
+            else:
+                end -= 1        
+
+        if (find_prefix and prefix_unknown) or (not find_prefix and start != len(word)):
+            subwords.append(self.unk_token)
+            
         return subwords
